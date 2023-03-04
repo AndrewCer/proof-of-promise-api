@@ -1,0 +1,76 @@
+import express from 'express';
+import { PromisePropertyFilter } from '../../../models/db/promise.model';
+import { ReturnServiceType } from '../../../models/return.model';
+import promiseDbService from '../../../services/db/promise.db.service';
+import returnService from '../../../services/return/return.service';
+import walletService from '../../../services/wallet/wallet.service';
+
+const router = express.Router();
+
+/*
+* START: CRUD
+*/
+// Create
+
+// Read
+router.get(
+    '/promise/:hash',
+    async (req: express.Request, res: express.Response) => {
+        const { hash } = req.params;
+
+        const promise = await promiseDbService.findOneLean({ promiseHash: hash }, PromisePropertyFilter.public);
+        if (!promise) {
+            return returnService.sendResponse(ReturnServiceType.invalid, res);
+        }
+
+        res.json({
+            success: promise
+        });
+    });
+
+// Update
+router.patch(
+    '/promise/:hash',
+    async (req: express.Request, res: express.Response) => {
+        const { hash } = req.params;
+        const { address } = req.body;
+
+        const promise = await promiseDbService.findOne({ promiseHash: hash }, PromisePropertyFilter.server);
+        if (!promise) {
+            return returnService.sendResponse(ReturnServiceType.invalid, res);
+        }
+
+        const contractFunctions = walletService.contractFunctions;
+        const isSigner = await contractFunctions.signers(hash, address);
+
+        if (isSigner) {
+            if (!promise.signers) {
+                promise.signers = [address];
+            }
+            else {                
+                promise.signers.push(address);
+            }
+
+
+            await promise.save();
+        }
+
+        res.json({
+            success: isSigner
+        });
+    });
+// Delete
+
+/*
+* END: CRUD
+*/
+
+/*
+* START: Helper methods
+*/
+
+/*
+* END: Helper methods
+*/
+
+export { router }

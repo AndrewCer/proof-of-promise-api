@@ -1,8 +1,10 @@
 import { Storage } from '@google-cloud/storage';
 import axios from 'axios';
+import { ethers } from 'ethers';
 import express from 'express';
 import multer from 'multer';
 import { NFTStorage, File } from "nft.storage";
+import PromiseDoc, { IPromise, PromiseData } from '../../../models/db/promise.model';
 import { ErrorCode } from '../../../models/error-code.model';
 import nanoidService from '../../../services/id-generators/nanoid.service';
 
@@ -42,19 +44,21 @@ router.post(
             res.json({ errorCode: ErrorCode.invalidRequest });
         }
 
-        const metaData: any = {
+        const metadata: any = {
             name: req.body.name,
             description: req.body.description ? req.body.description : '',
             image: imageFile,
         }
 
         if (req.body.attributes) {
-            metaData.attributes = JSON.parse(req.body.attributes);
+            metadata.attributes = JSON.parse(req.body.attributes);
         }
 
         if (req.body.external_url) {
-            metaData.external_url = req.body.external_url;
+            metadata.external_url = req.body.external_url;
         }
+
+        let tokenUrl: string;
 
         if (req.file) {
             // Store backup to gcloud
@@ -64,11 +68,13 @@ router.post(
             const fileExtension = file.mimetype.split('/')[1];
             const fileName = `token-files/${fileId}.${fileExtension}`;
 
-            metaData.external_url = `https://storage.googleapis.com/${rawDocBucketName}/${fileName}`;
+            metadata.external_url = `https://storage.googleapis.com/${rawDocBucketName}/${fileName}`;
 
             // Save to IPFS
             const client = new NFTStorage({ token: nftStorageKey as string });
-            const token = await client.store(metaData);
+            const token = await client.store(metadata);
+
+            tokenUrl = token.url;
 
             const blob = storage.bucket(rawDocBucketName).file(fileName);
             const blobStream = blob.createWriteStream();
@@ -79,11 +85,11 @@ router.post(
             });
 
             blobStream.on('finish', async () => {
-                metaData.image = cloud_image;
+                metadata.image = cloud_image;
                 res.json({
                     success: {
                         uri: token.url,
-                        metaData,
+                        metadata,
                     }
                 });
             });
@@ -93,16 +99,46 @@ router.post(
         else {
             // Save to IPFS
             const client = new NFTStorage({ token: nftStorageKey as string });
-            const token = await client.store(metaData);
+            const token = await client.store(metadata);
 
-            metaData.image = cloud_image;
+            tokenUrl = token.url;
+
+            metadata.image = cloud_image;
             res.json({
                 success: {
                     uri: token.url,
-                    metaData,
+                    metadata,
                 }
             });
         }
+
+        const receivers = req.body.receivers;
+        let receiversArr = [];
+        if (receivers && receivers.length) {
+            receiversArr = receivers.split(',');
+        }
+
+        metadata.image = 'https://storage.googleapis.com/proof_of_promise/pop-logo.png';
+
+        const promiseData: PromiseData = {
+            burnAuth: req.body.burnAuth,
+            created: Date.now(),
+            creator: req.body.creator,
+            price: req.body.price,
+            metadata,
+            restricted: false,
+            tokenUri: tokenUrl,
+            promiseHash: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`${tokenUrl}:${req.body.creator}`))
+        }
+
+        if (receiversArr && receiversArr.length) {
+            promiseData.restricted = true;
+            promiseData.receivers = receiversArr;
+        }
+
+        // save to DB here
+        const promise: IPromise = new PromiseDoc(promiseData);
+        await promise.save();
     });
 // Read
 
