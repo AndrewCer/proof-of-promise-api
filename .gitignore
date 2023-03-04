@@ -1,0 +1,8 @@
+.env
+node_modules
+build
+
+cert.pem
+key.pem
+
+gcloud-app-credentials.json
