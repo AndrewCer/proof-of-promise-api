@@ -1,7 +1,7 @@
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
 const client = new SecretManagerServiceClient();
-const parent = 'projects/soulbound-367119';
+const parent = 'projects/proof-of-promise';
 
 class SecretManagerService {
 
