@@ -22,6 +22,18 @@ router.post(
     '/upload',
     upload.single('uploaded-image'),
     async (req: express.Request, res: express.Response) => {
+        const {
+            attributes,
+            burnAuth,
+            creator,
+            chain,
+            description,
+            external_url,
+            name,
+            price,
+            receivers,
+        } = req.body;
+
         const nftStorageKey = process.env.NFT_STORAGE_API_KEY;
 
         const fileId = nanoidService.generate();
@@ -45,17 +57,17 @@ router.post(
         }
 
         const metadata: any = {
-            name: req.body.name,
-            description: req.body.description ? req.body.description : '',
+            name,
+            description: description ? description : '',
             image: imageFile,
         }
 
-        if (req.body.attributes) {
-            metadata.attributes = JSON.parse(req.body.attributes);
+        if (attributes) {
+            metadata.attributes = JSON.parse(attributes);
         }
 
-        if (req.body.external_url) {
-            metadata.external_url = req.body.external_url;
+        if (external_url) {
+            metadata.external_url = external_url;
         }
 
         let tokenUrl: string;
@@ -65,7 +77,11 @@ router.post(
             const file = req.file as Express.Multer.File;
 
             const storage = new Storage();
-            const fileExtension = file.mimetype.split('/')[1];
+            let fileExtension = file.mimetype.split('/')[1];
+            if (fileExtension.includes('vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+                fileExtension = 'docx';
+            }
+
             const fileName = `token-files/${fileId}.${fileExtension}`;
 
             metadata.external_url = `https://storage.googleapis.com/${rawDocBucketName}/${fileName}`;
@@ -112,23 +128,24 @@ router.post(
             });
         }
 
-        const receivers = req.body.receivers;
+        const receiversStr = receivers;
         let receiversArr = [];
-        if (receivers && receivers.length) {
-            receiversArr = receivers.split(',');
+        if (receiversStr && receiversStr.length) {
+            receiversArr = receiversStr.split(',');
         }
 
         metadata.image = 'https://storage.googleapis.com/proof_of_promise/pop-logo.png';
 
         const promiseData: PromiseData = {
-            burnAuth: req.body.burnAuth,
+            burnAuth: burnAuth,
+            chain,
             created: Date.now(),
-            creator: req.body.creator,
-            price: req.body.price,
+            creator: creator,
+            price: price,
             metadata,
             restricted: false,
             tokenUri: tokenUrl,
-            promiseHash: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`${tokenUrl}:${req.body.creator}`))
+            promiseHash: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`${tokenUrl}:${creator}`))
         }
 
         if (receiversArr && receiversArr.length) {

@@ -195,6 +195,24 @@ export const jsonAbi = [
     {
         "inputs": [
             {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "promiseHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "burnToken",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "components": [
                     {
                         "internalType": "bytes32",
@@ -324,6 +342,25 @@ export const jsonAbi = [
     {
         "inputs": [
             {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "promiseToken",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "bytes32",
                 "name": "",
                 "type": "bytes32"
@@ -444,6 +481,24 @@ export const jsonAbi = [
             }
         ],
         "name": "setApprovalForAll",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "enum ERC5484.BurnAuth",
+                "name": "auth",
+                "type": "uint8"
+            }
+        ],
+        "name": "setBurnAuth",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

@@ -1,13 +1,12 @@
 import { BigNumber, ethers } from 'ethers';
 
 // Place NEW address here
-import { jsonAbi } from '../../utils/abi/0xdF41B10837760583eb632CD5C2d7723d0e2E54F5';
+import { jsonAbi } from '../../utils/abi/0xB3C887ee0ad0AdDAd4fA3ECa3DC9af7595264bA3';
 
 const isTestNet = (process.env.NODE_ENV === 'development' || process.env.TESTNET);
-const isBaseNetwork = process.env.NETWORK_BASE;
 
 // Place NEW address here
-const currentContractTestNet = '0xdF41B10837760583eb632CD5C2d7723d0e2E54F5';
+const currentContractTestNet = '0xB3C887ee0ad0AdDAd4fA3ECa3DC9af7595264bA3';
 const currentContractMainNet = '';
 
 // Place OLD address here
@@ -28,14 +27,11 @@ class PolygonWalletService {
     }
 
     get provider() {
-        console.log('running on network: ', isTestNet ? 'maticmum' : 'matic');
-        return new ethers.providers.InfuraProvider(
-            isTestNet ? 'maticmum' : 'matic',
-            process.env.INFURA_API_KEY
-        );
+        console.log('running on network: ', isTestNet ? 'base-goerli' : 'base');
+        return new ethers.providers.JsonRpcProvider('https://base-goerli.infura.io/v3/bad2b2c13590479e967f83b8d6747cb0');
     }
     get signer() {
-        return new ethers.Wallet({ address: process.env.SIGNER_ADDRESS as string, privateKey: process.env.SIGNER_KEY as string }, this.provider);
+        return new ethers.Wallet({ address: process.env.SIGNER_ADDRESS_BASE as string, privateKey: process.env.SIGNER_KEY_BASE as string }, this.provider);
     }
     get contract() {
         return new ethers.Contract(this.contractAddress, this.sbtAbi, this.provider);

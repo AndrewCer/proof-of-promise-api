@@ -1,9 +1,11 @@
 import express from 'express';
+import { Chain } from '../../../models/chain.model';
 import { PromisePropertyFilter } from '../../../models/db/promise.model';
 import { ReturnServiceType } from '../../../models/return.model';
 import promiseDbService from '../../../services/db/promise.db.service';
 import returnService from '../../../services/return/return.service';
-import walletService from '../../../services/wallet/wallet.service';
+import baseWalletService from '../../../services/wallet/base-wallet.service';
+import polygonWalletService from '../../../services/wallet/polygon-wallet.service';
 
 const router = express.Router();
 
@@ -28,6 +30,21 @@ router.get(
         });
     });
 
+router.get(
+    '/promises/:address',
+    async (req: express.Request, res: express.Response) => {
+        const { address } = req.params;
+
+        const promise = await promiseDbService.findLean({ signers: address }, PromisePropertyFilter.public);
+        if (!promise) {
+            return returnService.sendResponse(ReturnServiceType.invalid, res);
+        }
+
+        res.json({
+            success: promise
+        });
+    });
+
 // Update
 router.patch(
     '/promise/:hash',
@@ -40,14 +57,23 @@ router.patch(
             return returnService.sendResponse(ReturnServiceType.invalid, res);
         }
 
-        const contractFunctions = walletService.contractFunctions;
-        const isSigner = await contractFunctions.signers(hash, address);
+        let contractFunctions;
+        let isSigner;
+        if (promise.chain === Chain.polygon) {
+            contractFunctions = polygonWalletService.contractFunctions;
+            isSigner = await contractFunctions.signers(hash, address);
+        }
+        else {
+            contractFunctions = baseWalletService.contractFunctions;
+            // TODO(nocs): once infura base connection is fixed, can take this away
+            isSigner = true;
+        }
 
         if (isSigner) {
             if (!promise.signers) {
                 promise.signers = [address];
             }
-            else {                
+            else {
                 promise.signers.push(address);
             }
 

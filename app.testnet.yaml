@@ -1,0 +1,28 @@
+runtime: nodejs16
+service: pop-api-testnet
+
+instance_class: F1
+
+automatic_scaling:
+  min_instances: 1
+  min_idle_instances: 1
+  max_instances: 1
+
+env_variables:
+  TESTNET: "true"
+
+# resources:
+#   cpu: 1
+#   memory_gb: 0.5
+#   disk_size_gb: 10
+
+# Warms up on new instance start. See: https://cloud.google.com/appengine/docs/standard/nodejs/configuring-warmup-requests
+inbound_services:
+- warmup
+
+handlers:
+  # HTTPS redirect
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto

@@ -1,0 +1,14 @@
+steps:
+  # Install node packages
+  - name: node:current
+    entrypoint: npm
+    args: ['install']
+
+  # Build production files
+  - name: node:current
+    entrypoint: npm
+    args: ['run', 'build:prod']
+
+  # Deploy to google cloud app engine
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['app', 'deploy', '--version=v1', 'app.testnet.yaml']

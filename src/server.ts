@@ -67,7 +67,7 @@ app.get('/_ah/warmup', (req, res) => {
 app.use('/api', cors(corsOptions), apiRoutes);
 
 app.get('*', (req, res) => {
-    res.redirect('https://soulbind.app');
+    res.redirect('https://testnet-proofofpromise.xyz');
 });
 
 /**

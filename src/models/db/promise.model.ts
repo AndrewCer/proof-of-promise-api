@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { BurnAuth } from '../burn-auth.model';
+import { Chain } from '../chain.model';
 
 export enum PromisePropertyFilter {
     admin = '-_id -__v',
@@ -22,6 +23,7 @@ export interface Metadata {
 
 export interface PromiseData {
     burnAuth: BurnAuth;
+    chain: Chain;
     created: number;
     creator: string;
     price: number;
@@ -35,6 +37,7 @@ export interface PromiseData {
 
 export interface IPromise extends Document {
     burnAuth: BurnAuth;
+    chain: Chain;
     created: number;
     creator: string;
     price: number;
@@ -49,6 +52,10 @@ export interface IPromise extends Document {
 const PromiseSchema = new Schema<IPromise>({
     burnAuth: {
         type: Number,
+        required: true,
+    },
+    chain: {
+        type: String,
         required: true,
     },
     created: {
